@@ -1,21 +1,25 @@
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
+from sqlalchemy.ext.asyncio.session import AsyncSession
+
 from app.v1.model.user_model import User as UserModel
 from app.v1.schema import user_schema
-from sqlmodel import select, Session
-from typing import Optional
+from sqlmodel import select
+
+
+from app.v1.schema.user_schema import UserRegister
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def create_user(user: user_schema.UserRegister, session: Session):
-    existing_user: Optional[UserModel] = session.exec(
-        select(UserModel).where(
-            (UserModel.email == user.email) | (UserModel.username == user.username)
-        )
-    ).first()
+async def create_user(user: UserRegister, session: AsyncSession):
+    statement = select(UserModel).where(
+        (UserModel.email == user.email) | (UserModel.username == user.username)
+    )
+    result = await session.exec(statement)
+    existing_user = result.first()
 
     if existing_user:
         msg = "Email already registered"
