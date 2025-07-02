@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from app.v1.utils.settings import Settings
 
+# Asynchronous database
 settings = Settings()
 assert settings.database_url, "DATABASE_URL is not set in environment variables"
 
