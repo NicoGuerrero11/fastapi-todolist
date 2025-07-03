@@ -2,6 +2,7 @@ from sqlmodel import create_engine, text, SQLModel
 from sqlalchemy.ext.asyncio import AsyncEngine
 from app.v1.utils.settings import Config
 from app.v1.model.user_model import User
+from app.v1.model.todo_model import Todo
 
 
 # Asynchronous database
