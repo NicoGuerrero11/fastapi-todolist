@@ -15,8 +15,8 @@ class Todo(SQLModel, table=True):
     )
     title: str
     is_done: bool = Field(default=False)
-    created_at: datetime = Field(Column(pg.TIMESTAMP, default=datetime.now))
-    updated_at: datetime = Field(Column(pg.TIMESTAMP, default=datetime.now))
+    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    updated_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
     user_id: uuid.UUID = Field(foreign_key="users.uid")
 
     def __repr__(self) -> str:
