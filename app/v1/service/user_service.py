@@ -1,47 +1,43 @@
+from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel import select
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
-from sqlalchemy.ext.asyncio.session import AsyncSession
-
-from app.v1.model.user_model import User as UserModel
-from app.v1.schema import user_schema
-from sqlmodel import select
-
-
-from app.v1.schema.user_schema import UserRegister
+from app.v1.model.user_model import User
+from app.v1.schema.user_schema import UserCreate, UserLogin,UserRead, TokenResponse
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+class UserService:
 
-async def create_user(user: UserRegister, session: AsyncSession):
-    statement = select(UserModel).where(
-        (UserModel.email == user.email) | (UserModel.username == user.username)
-    )
-    result = await session.exec(statement)
-    existing_user = result.first()
+    async def register_user(self, user_data: UserCreate, session: AsyncSession) -> UserRead:
+        # Check if the user already exists
+        statement  = select(User).where(User.email == user_data.email)
+        result = await session.exec(statement )
+        existing_user = result.first()
+        if existing_user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
-    if existing_user:
-        msg = "Email already registered"
-        if existing_user.username == user.username:
-            msg = "Username already registered"
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=msg
+        # Hash the password and create the user
+        hashed_password = pwd_context.hash(user_data.password)
+        new_user = User(
+            username=user_data.username,
+            email=user_data.email,
+            password=hashed_password,
         )
+        session.add(new_user)
+        await session.commit()
+        await session.refresh(new_user)
+        return UserRead.model_value(new_user)
 
-    db_user = UserModel(
-        username=user.username,
-        email=user.email,
-        password=get_password_hash(user.password)
-    )
+    async def login_user(self, credentials: UserLogin, session: AsyncSession) -> TokenResponse:
+        statement  = select(User).where(User.email == credentials.email)
+        result = await session.exec(statement)
+        user = result.first()
+        if not user or not pwd_context.verify(credentials.password, user.password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-
-    return user_schema.User(
-        id=db_user.id,
-        username=db_user.username,
-        email=db_user.email
-    )
+        """
+            create "create_access_token" function to generate the credential once the user is logged in
+        """
+        token = create_access_token({"sub": str(user.uid)})
+        return TokenResponse(access_token=token)
