@@ -1,16 +1,29 @@
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
+from uuid import UUID
+from typing import Optional
 
+class UserSchema(BaseModel):
+    username: str
+    email: EmailStr
 
-class UserBase(BaseModel):
-    email: EmailStr = Field(..., examples=["myemail@cosasdedevs.com"])
-    username: str = Field(..., min_length=3, max_length=50, examples=["MyTypicalUsername"])
+class UserCreate(UserSchema):
+    password: str
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
-class User(UserBase):
-    id: int = Field(..., examples=[5])
+class UserRead(UserSchema):
+    uid: UUID
 
+    class Config:
+        from_attributes = True
 
-class UserRegister(UserBase):
-    password: str = Field(..., min_length=8, max_length=64, examples=["strongpass"])
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
