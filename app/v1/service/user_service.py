@@ -27,7 +27,7 @@ class UserService:
         session.add(new_user)
         await session.commit()
         await session.refresh(new_user)
-        return UserRead.model_value(new_user)
+        return UserRead.model_validate(new_user)
 
     async def login_user(self, credentials: UserLogin, session: AsyncSession) -> TokenResponse:
         statement  = select(User).where(User.email == credentials.email)
