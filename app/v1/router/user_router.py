@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends
-from sqlmodel import Session
+from fastapi import APIRouter, Depends, status
+from sqlmodel.ext.asyncio.session import AsyncSession
 from app.v1.utils.db import get_session
-from app.v1.service import user_service
-from app.v1.schema.user_schema import UserRegister, User
+from app.v1.service.user_service import UserService
+from app.v1.schema.user_schema import UserCreate, UserUpdate, UserLogin, UserRead
 
-router = APIRouter()
+user_router = APIRouter()
+Us = UserService()
 
-@router.post("/user/", response_model=User)
-async def create_user(
-    user: UserRegister,
-    session: Session = Depends(get_session)
-):
-    return await user_service.create_user(user, session)
+@user_router.post("/register", response_model=UserRead)
+async def register(user_data: UserCreate, session: AsyncSession = Depends(get_session)):
+    return await Us.register_user(user_data, session)
+
+@user_router.post("/login", response_model=UserRead)
+async def login(credentials: UserLogin, session: AsyncSession = Depends(get_session)):
+    return await Us.login_user(credentials, session)
+
+
