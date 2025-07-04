@@ -1,17 +1,17 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
 from typing import Optional
 
 class UserSchema(BaseModel):
-    username: str
-    email: EmailStr
+    username: str = Field(max_length=64)
+    email: EmailStr = Field(max_length=64)
 
 class UserCreate(UserSchema):
-    password: str
+    password: str = Field(min_length=6)
 
 class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+    email: EmailStr = Field(max_length=64)
+    password: str = Field(min_length=6)
 
 class UserRead(UserSchema):
     uid: UUID
