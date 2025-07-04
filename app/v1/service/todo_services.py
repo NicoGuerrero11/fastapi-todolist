@@ -7,9 +7,16 @@ import uuid
 
 class TodoService:
 
-
+    #Admin
     async def get_all_todos(self, session:AsyncSession) -> list[Todo]:
         statement = select(Todo).order_by(desc(Todo.created_at))
+        result = await session.exec(statement)
+        todos = result.scalars().all()
+        return todos
+
+    # User
+    async def get_user_todos(self, user_uid:uuid.UUID ,session:AsyncSession) -> Optional[Todo]:
+        statement = select(Todo).where(Todo.user_id == user_uid)
         result = await session.exec(statement)
         todos = result.scalars().all()
         return todos
