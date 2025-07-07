@@ -20,7 +20,9 @@ class UserRead(UserSchema):
         from_attributes = True
 
 class TokenResponse(BaseModel):
+    user_uid: str
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
 
 class UserUpdate(BaseModel):
