@@ -1,12 +1,11 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from fastapi import HTTPException, status
-from passlib.context import CryptContext
 from app.v1.model.user_model import User
 from app.v1.schema.user_schema import UserCreate, UserLogin,UserRead, TokenResponse
-from app.v1.scripts.token import create_access_token
+from app.v1.scripts.token import create_access_token, decode_token
+from app.v1.scripts.hash_password import hash_password, verify_password
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class UserService:
 
@@ -19,7 +18,7 @@ class UserService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
 
         # Hash the password and create the user
-        hashed_password = pwd_context.hash(user_data.password)
+        hashed_password = hash_password(user_data.password)
         new_user = User(
             username=user_data.username,
             email=user_data.email,
@@ -34,7 +33,7 @@ class UserService:
         statement  = select(User).where(User.email == credentials.email)
         result = await session.exec(statement)
         user = result.first()
-        if not user or not pwd_context.verify(credentials.password, user.password):
+        if not user or not verify_password(credentials.password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
         token = create_access_token({"sub": str(user.uid)})
         return TokenResponse(access_token=token)
