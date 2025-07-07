@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from app.v1.model.user_model import User
 from app.v1.schema.user_schema import UserCreate, UserLogin,UserRead, TokenResponse
+from app.v1.scripts.token import create_access_token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -35,9 +36,5 @@ class UserService:
         user = result.first()
         if not user or not pwd_context.verify(credentials.password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-
-        """
-            create "create_access_token" function to generate the credential once the user is logged in
-        """
         token = create_access_token({"sub": str(user.uid)})
         return TokenResponse(access_token=token)
