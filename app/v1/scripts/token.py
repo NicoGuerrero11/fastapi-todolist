@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 import jwt
@@ -20,3 +21,15 @@ def create_access_token(user_data: dict, expiry:timedelta = None, refresh: bool=
         algorithm=Config.JWT_ALGORITHM
     )
     return token
+
+def decode_token(token:str) -> dict:
+    try:
+        token_data = jwt.decode(
+            jwt=token,
+            key=Config.SECRET_KEY,
+            algorithms=[Config.JWT_ALGORITHM]
+        )
+        return token_data
+    except jwt.PyJWTError as e:
+        logging.exception(e)
+        return None
