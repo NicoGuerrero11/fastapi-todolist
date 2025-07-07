@@ -5,6 +5,7 @@ from app.v1.model.user_model import User
 from app.v1.schema.user_schema import UserCreate, UserLogin,UserRead, TokenResponse
 from app.v1.scripts.token import create_access_token, decode_token
 from app.v1.scripts.hash_password import hash_password, verify_password
+from datetime import timedelta
 
 
 class UserService:
@@ -35,5 +36,24 @@ class UserService:
         user = result.first()
         if not user or not verify_password(credentials.password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-        token = create_access_token({"sub": str(user.uid)})
-        return TokenResponse(access_token=token)
+        access_token = create_access_token(
+            user_data={
+                "email": user.email,
+                "user_uid": str(user.uid)
+            }
+        )
+        refresh_token = create_access_token(
+            user_data={
+                "email": user.email,
+                "user_uid": str(user.uid)
+            },
+            refresh=True,
+            expiry=timedelta(days=2)
+        )
+
+        return TokenResponse(
+            user_uid=str(user.uid),
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer"
+        )
