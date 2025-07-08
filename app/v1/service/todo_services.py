@@ -4,6 +4,7 @@ from sqlmodel import select, desc
 from app.v1.model.todo_model import Todo
 from typing import Optional
 import uuid
+from app.v1.scripts.token_validation import validate_owner
 
 class TodoService:
 
@@ -13,25 +14,26 @@ class TodoService:
         result = await session.exec(statement)
         if result is None:
             return []
-        scalars = result.scalars()
-        if scalars is None:
-            return []
-        return scalars.all()
+        return result.all()
 
     # User
-    async def get_user_todos(self, user_uid:uuid.UUID ,session:AsyncSession) -> list[Todo]:
+    async def get_user_todos(self, user_uid:uuid.UUID ,session:AsyncSession, user_details) -> list[Todo]:
         statement = select(Todo).where(Todo.user_id == user_uid)
         result = await session.exec(statement)
         if result is None:
             return []
+        validate_owner(str(user_uid), user_details["user"]["user_uid"])
         return result.all()
 
 
-    async def get_todo(self, todo_id:uuid.UUID, session:AsyncSession) -> Optional[Todo]:
+    async def get_todo(self, todo_id:uuid.UUID, session:AsyncSession, user_details:dict) -> Optional[Todo]:
         statement = select(Todo).where(Todo.id == todo_id)
         result = await session.exec(statement)
         todo = result.first()
-        return todo if todo is not None else None
+        if todo is None:
+            return None
+        validate_owner(str(todo.user_id), user_details["user"]["user_uid"])
+        return todo
 
 
     async def create_todo(self, todo_data:TodoCreate, session:AsyncSession, user_details:dict) -> Todo:
@@ -44,8 +46,8 @@ class TodoService:
         return new_todo
 
 
-    async def update_todo(self, todo_id:uuid.UUID, update_data:TodoUpdate,session:AsyncSession) -> Optional[Todo]:
-        todo_to_update = await self.get_todo(todo_id, session)
+    async def update_todo(self, todo_id:uuid.UUID, update_data:TodoUpdate,session:AsyncSession, user_details: dict) -> Optional[Todo]:
+        todo_to_update = await self.get_todo(todo_id, session, user_details)
         if todo_to_update is not None:
             update_data_dict = update_data.model_dump(exclude_unset=True)
             for k, v in update_data_dict.items():
@@ -56,8 +58,8 @@ class TodoService:
         return None
 
 
-    async def delete_todo(self, todo_id:uuid.UUID, session:AsyncSession) -> bool:
-        todo_to_delete = await self.get_todo(todo_id, session)
+    async def delete_todo(self, todo_id:uuid.UUID, session:AsyncSession, user_details: dict) -> bool:
+        todo_to_delete = await self.get_todo(todo_id, session, user_details)
         if todo_to_delete is not None:
             await session.delete(todo_to_delete)
             await session.commit()
