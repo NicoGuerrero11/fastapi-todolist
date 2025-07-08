@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from app.v1.utils.db import init_db
 from app.v1.router.user_router import user_router
+from app.v1.router.todo_router import todo_router
 
 @asynccontextmanager
 async def life_span(app: FastAPI):
@@ -14,3 +15,4 @@ async def life_span(app: FastAPI):
 
 app = FastAPI(lifespan=life_span)
 app.include_router(user_router, prefix="/api/users")
+app.include_router(todo_router, prefix="/api")
