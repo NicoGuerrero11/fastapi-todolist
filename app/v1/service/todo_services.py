@@ -11,15 +11,20 @@ class TodoService:
     async def get_all_todos(self, session:AsyncSession) -> list[Todo]:
         statement = select(Todo).order_by(desc(Todo.created_at))
         result = await session.exec(statement)
-        todos = result.scalars().all()
-        return todos
+        if result is None:
+            return []
+        scalars = result.scalars()
+        if scalars is None:
+            return []
+        return scalars.all()
 
     # User
-    async def get_user_todos(self, user_uid:uuid.UUID ,session:AsyncSession) -> Optional[Todo]:
+    async def get_user_todos(self, user_uid:uuid.UUID ,session:AsyncSession) -> list[Todo]:
         statement = select(Todo).where(Todo.user_id == user_uid)
         result = await session.exec(statement)
-        todos = result.scalars().all()
-        return todos
+        if result is None:
+            return []
+        return result.all()
 
 
     async def get_todo(self, todo_id:uuid.UUID, session:AsyncSession) -> Optional[Todo]:
@@ -29,8 +34,9 @@ class TodoService:
         return todo if todo is not None else None
 
 
-    async def create_todo(self, todo_data:TodoCreate, session:AsyncSession) -> Todo:
+    async def create_todo(self, todo_data:TodoCreate, session:AsyncSession, user_details:dict) -> Todo:
         todo_data_dict = todo_data.model_dump()
+        todo_data_dict["user_id"] = user_details["user"]["user_uid"]
         new_todo = Todo(**todo_data_dict)
         session.add(new_todo)
         await session.commit()
