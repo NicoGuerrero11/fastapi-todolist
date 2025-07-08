@@ -2,15 +2,15 @@ import logging
 import uuid
 
 import jwt
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from app.v1.utils.settings import Config
 
-TOKEN_EXPIRATION = 3600
+TOKEN_EXPIRATION = timedelta(hours=1)
 
-def create_access_token(user_data: dict, expiry:timedelta = None, refresh: bool=False ):
+def create_access_token(user_data: dict, expiry: timedelta = TOKEN_EXPIRATION, refresh: bool=False ):
     payload = {
         "user": user_data,
-        "exp": datetime.now() + (expiry if expiry is not None else timedelta(seconds=TOKEN_EXPIRATION)),
+        "exp": datetime.now(timezone.utc) + (expiry if expiry is not None else TOKEN_EXPIRATION),
         'jti': str(uuid.uuid4()),
         "refresh": refresh
     }
