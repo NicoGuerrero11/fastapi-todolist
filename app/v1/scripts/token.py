@@ -12,7 +12,7 @@ def create_access_token(user_data: dict, expiry: timedelta = TOKEN_EXPIRATION, r
         "user": user_data,
         "exp": datetime.now(timezone.utc) + (expiry if expiry is not None else TOKEN_EXPIRATION),
         'jti': str(uuid.uuid4()),
-        "refresh": refresh
+        "refresh_token": refresh
     }
 
     token = jwt.encode(
