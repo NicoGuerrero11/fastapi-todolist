@@ -1,6 +1,5 @@
 import uuid
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio.session import AsyncSession
 
 
 def validate_owner(user_uid: str, token_id: uuid.UUID) -> bool:
