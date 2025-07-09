@@ -1,11 +1,13 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from fastapi import HTTPException, status
+from app.v1.utils.redis import add_jti_to_blocklist
 from app.v1.model.user_model import User
 from app.v1.schema.user_schema import UserCreate, UserLogin,UserRead, TokenResponse
 from app.v1.scripts.token import create_access_token, decode_token
 from app.v1.scripts.hash_password import hash_password, verify_password
-from datetime import timedelta
+from datetime import timedelta, datetime
+from fastapi.responses import JSONResponse
 
 
 class UserService:
@@ -57,3 +59,24 @@ class UserService:
             refresh_token=refresh_token,
             token_type="bearer"
         )
+    async def refresh_user_token(self, user_details: dict, session: AsyncSession) -> JSONResponse:
+        expires_in = user_details['exp']
+
+        if datetime.fromtimestamp(expires_in) > datetime.now():
+            new_access_token = create_access_token(
+                user_data=user_details['user']
+            )
+            return JSONResponse(content={"new_access_token": new_access_token})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expire token")
+
+    async def revoke_token(self, user_details: dict) -> JSONResponse:
+        jti = user_details['jti']
+        await add_jti_to_blocklist(jti)
+
+        return JSONResponse(
+            content={
+                "message": "Successfully logged out",
+            },
+            status_code = status.HTTP_200_OK
+        )
+
