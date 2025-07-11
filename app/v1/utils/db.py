@@ -2,6 +2,7 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import text, SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import create_engine
 from sqlalchemy.ext.asyncio import AsyncEngine
 from app.v1.utils.settings import Config
 from sqlalchemy.orm import sessionmaker
@@ -13,6 +14,11 @@ async_engine: AsyncEngine = create_async_engine(
     url=Config.DATABASE_URL,
     echo=True
 )
+
+# Synchronous database for alembic
+SYNC_DATABASE = Config.SYNC_DATABASE_URL
+sync_engine =  create_engine(SYNC_DATABASE, echo=True)
+
 
 async def init_db() -> None:
     async with async_engine.begin() as conn:
