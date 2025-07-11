@@ -2,6 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    SYNC_DATABASE_URL: str
     SECRET_KEY: str
     JWT_ALGORITHM: str
     REDIS_HOST : str = "localhost"
