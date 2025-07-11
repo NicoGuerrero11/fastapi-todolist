@@ -11,6 +11,11 @@ from fastapi.responses import JSONResponse
 
 
 class UserService:
+    async def get_user_by_email(self, email: str, session: AsyncSession):
+        statement = select(User).where(User.email == email)
+        result = await session.exec(statement)
+        user = result.first()
+        return user
 
     async def register_user(self, user_data: UserCreate, session: AsyncSession) -> UserRead:
         # Check if the user already exists
@@ -26,6 +31,7 @@ class UserService:
             username=user_data.username,
             email=user_data.email,
             password=hashed_password,
+            role="user"
         )
         session.add(new_user)
         await session.commit()
