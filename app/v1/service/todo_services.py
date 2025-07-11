@@ -8,14 +8,6 @@ from app.v1.scripts.token_validation import validate_owner
 
 class TodoService:
 
-    #Admin
-    async def get_all_todos(self, session:AsyncSession) -> list[Todo]:
-        statement = select(Todo).order_by(desc(Todo.created_at))
-        result = await session.exec(statement)
-        if result is None:
-            return []
-        return result.all()
-
     # User
     async def get_user_todos(self, user_uid:uuid.UUID ,session:AsyncSession, user_details) -> list[Todo]:
         statement = select(Todo).where(Todo.user_id == user_uid)
