@@ -5,6 +5,7 @@ from app.v1.router.admin_router import admin_router
 from app.v1.utils.db import init_db
 from app.v1.router.user_router import user_router
 from app.v1.router.todo_router import todo_router
+from app.v1.scripts.errors import register_all_errors
 
 @asynccontextmanager
 async def life_span(app: FastAPI):
@@ -19,6 +20,7 @@ app = FastAPI(
     description="A REST API for a todo list",
     version="v1"
 )
+register_all_errors(app)
 # Users routes
 app.include_router(user_router, prefix="/api/users")
 
