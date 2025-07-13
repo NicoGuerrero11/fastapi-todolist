@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str
     REDIS_HOST : str = "localhost"
     REDIS_PORT: int = 6379
+    REDIS_URL: str = "redis://localhost:6379"
 
     model_config = SettingsConfigDict(
         env_file='.env',
