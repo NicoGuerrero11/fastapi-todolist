@@ -3,7 +3,7 @@ from app.v1.utils.settings import Config
 
 JTI_EXPIRY = 3600
 
-redis_url = f"redis://{Config.REDIS_HOST}:{Config.REDIS_PORT}/0"
+redis_url = Config.REDIS_URL
 token_blocklist = Redis.from_url(redis_url, decode_responses=True)
 
 async def add_jti_to_blocklist(jti: str) -> None:
