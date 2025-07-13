@@ -24,8 +24,8 @@ async def login(credentials: UserLogin, session: AsyncSession = Depends(get_sess
 async def refresh(user_details: dict = Depends(refresh_token), session: AsyncSession = Depends(get_session)):
     return await Us.refresh_user_token(user_details, session)
 
-@user_router.get("/me")
-async def get_current_user(user=Depends(get_current_user), _:bool = Depends(role_check)):
+@user_router.get("/me", response_model=UserRead, dependencies=[Depends(RoleCheck(['admin']))])
+async def get_current_user(user=Depends(get_current_user)):
     return user
 
 @user_router.get("/logout")
