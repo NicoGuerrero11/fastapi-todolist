@@ -6,6 +6,7 @@ from fastapi.exceptions import HTTPException
 from app.v1.utils.redis import token_in_blocklist
 from app.v1.utils.db import get_session
 from app.v1.service.user_service import UserService
+from app.v1.scripts.errors import InvalidToken, RevokedToken,AccessTokenRequired,RefreshTokenRequired
 
 user_service = UserService()
 
@@ -22,17 +23,9 @@ class TokenBearer(HTTPBearer):
         token_data = decode_token(token)
 
         if not self.token_valid(token):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Invalid or expired token."
-                       "Resolution: Please get new Token."
-            )
+            raise InvalidToken()
         if await token_in_blocklist(token_data['jti']):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="error: This token is invalid or has been revoked,"
-                       "Resolution: Please get new Token."
-            )
+            raise RevokedToken()
 
         self.verify_token_data(token_data)
 
@@ -50,18 +43,12 @@ class TokenBearer(HTTPBearer):
 class AccessTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
         if token_data and token_data.get("refresh_token"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Please provide an access token."
-            )
+            raise AccessTokenRequired()
 
 class RefreshTokenBearer(TokenBearer):
     def verify_token_data(self, token_data: dict) -> None:
         if token_data and not token_data.get("refresh_token"):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Please provide a refresh token."
-            )
+            raise RefreshTokenRequired()
 
 async def get_current_user(token_details: dict = Depends(AccessTokenBearer()),
                      session: AsyncSession = Depends(get_session)):

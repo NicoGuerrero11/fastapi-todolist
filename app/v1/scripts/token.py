@@ -1,6 +1,6 @@
 import logging
 import uuid
-
+from app.v1.scripts.errors import InvalidToken, RevokedToken
 import jwt
 from datetime import timedelta, datetime, timezone
 from app.v1.utils.settings import Config
@@ -30,6 +30,5 @@ def decode_token(token:str) -> dict:
             algorithms=[Config.JWT_ALGORITHM]
         )
         return token_data
-    except jwt.PyJWTError as e:
-        logging.exception(e)
-        return None
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        raise InvalidToken()

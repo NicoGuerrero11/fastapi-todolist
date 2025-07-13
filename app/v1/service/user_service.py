@@ -1,6 +1,7 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
-from fastapi import HTTPException, status
+from fastapi import status
+from app.v1.scripts.errors import InvalidCredentials, InvalidToken, UserAlreadyExists
 from app.v1.utils.redis import add_jti_to_blocklist
 from app.v1.model.user_model import User
 from app.v1.schema.user_schema import UserCreate, UserLogin,UserRead, TokenResponse
@@ -23,7 +24,7 @@ class UserService:
         result = await session.exec(statement )
         existing_user = result.first()
         if existing_user:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+            raise UserAlreadyExists()
 
         # Hash the password and create the user
         hashed_password = hash_password(user_data.password)
@@ -43,7 +44,7 @@ class UserService:
         result = await session.exec(statement)
         user = result.first()
         if not user or not verify_password(credentials.password, user.password):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+            raise InvalidCredentials()
         access_token = create_access_token(
             user_data={
                 "email": user.email,
@@ -73,7 +74,7 @@ class UserService:
                 user_data=user_details['user']
             )
             return JSONResponse(content={"new_access_token": new_access_token})
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expire token")
+        raise InvalidToken()
 
     async def revoke_token(self, user_details: dict) -> JSONResponse:
         jti = user_details['jti']
